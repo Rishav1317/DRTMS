@@ -1,0 +1,1775 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <title>DRTMS — Disaster Relief Resource Management System</title>
+    <style>
+      /* ── Reset & Base ─────────────────────────────────────────── */
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      :root {
+        --bg: #0f1117;
+        --bg2: #161b27;
+        --bg3: #1e2536;
+        --bg4: #252d40;
+        --border: #2e3a52;
+        --border2: #3d4e6a;
+        --blue: #3b82f6;
+        --blue2: #2563eb;
+        --blue-dim: #1e3a5f;
+        --green: #22c55e;
+        --green-dim: #14532d;
+        --red: #ef4444;
+        --red-dim: #7f1d1d;
+        --amber: #f59e0b;
+        --amber-dim: #78350f;
+        --purple: #a855f7;
+        --purple-dim: #4c1d95;
+        --teal: #14b8a6;
+        --teal-dim: #134e4a;
+        --text: #e2e8f0;
+        --text2: #94a3b8;
+        --text3: #64748b;
+        --radius: 8px;
+        --radius-lg: 14px;
+        --shadow: 0 4px 24px rgba(0, 0, 0, 0.45);
+        --font: "Inter", system-ui, -apple-system, sans-serif;
+      }
+      body {
+        font-family: var(--font);
+        background: var(--bg);
+        color: var(--text);
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+      button {
+        font-family: var(--font);
+        cursor: pointer;
+      }
+
+      /* ── Layout ─────────────────────────────────────────────── */
+      .layout {
+        display: flex;
+        flex: 1;
+        overflow: hidden;
+      }
+      .sidebar {
+        width: 240px;
+        min-width: 240px;
+        background: var(--bg2);
+        border-right: 1px solid var(--border);
+        display: flex;
+        flex-direction: column;
+        overflow-y: auto;
+      }
+      .main {
+        flex: 1;
+        overflow-y: auto;
+        background: var(--bg);
+      }
+      .page {
+        display: none;
+        padding: 28px 32px;
+      }
+      .page.active {
+        display: block;
+      }
+
+      /* ── Top bar ─────────────────────────────────────────────── */
+      .topbar {
+        background: var(--bg2);
+        border-bottom: 1px solid var(--border);
+        padding: 0 32px;
+        height: 60px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        flex-shrink: 0;
+      }
+      .topbar-logo {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .topbar-logo-icon {
+        width: 32px;
+        height: 32px;
+        background: var(--blue);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 13px;
+        color: #fff;
+        letter-spacing: 0.5px;
+      }
+      .topbar-title {
+        font-size: 15px;
+        font-weight: 600;
+        color: var(--text);
+      }
+      .topbar-subtitle {
+        font-size: 12px;
+        color: var(--text3);
+        margin-left: auto;
+      }
+      .topbar-badge {
+        background: var(--blue-dim);
+        color: var(--blue);
+        font-size: 11px;
+        padding: 3px 8px;
+        border-radius: 99px;
+        font-weight: 600;
+        border: 1px solid rgba(59, 130, 246, 0.3);
+      }
+
+      /* ── Sidebar ─────────────────────────────────────────────── */
+      .sidebar-header {
+        padding: 20px 16px 8px;
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--text3);
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+      .nav-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 9px 16px;
+        border-radius: var(--radius);
+        margin: 1px 8px;
+        cursor: pointer;
+        transition:
+          background 0.15s,
+          color 0.15s;
+        font-size: 13.5px;
+        color: var(--text2);
+        font-weight: 500;
+      }
+      .nav-item:hover {
+        background: var(--bg3);
+        color: var(--text);
+      }
+      .nav-item.active {
+        background: var(--blue-dim);
+        color: var(--blue);
+        font-weight: 600;
+      }
+      .nav-item .icon {
+        width: 18px;
+        height: 18px;
+        opacity: 0.75;
+        flex-shrink: 0;
+      }
+      .nav-item.active .icon {
+        opacity: 1;
+      }
+      .sidebar-divider {
+        height: 1px;
+        background: var(--border);
+        margin: 8px 16px;
+      }
+      .sidebar-footer {
+        padding: 12px 16px;
+        margin-top: auto;
+        border-top: 1px solid var(--border);
+      }
+      .server-status {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 12px;
+        color: var(--text3);
+      }
+      .status-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--text3);
+        flex-shrink: 0;
+        transition: background 0.3s;
+      }
+      .status-dot.online {
+        background: var(--green);
+      }
+      .status-dot.offline {
+        background: var(--red);
+      }
+
+      /* ── Page header ─────────────────────────────────────────── */
+      .page-header {
+        margin-bottom: 24px;
+      }
+      .page-header h1 {
+        font-size: 22px;
+        font-weight: 700;
+        color: var(--text);
+        margin-bottom: 4px;
+      }
+      .page-header p {
+        font-size: 14px;
+        color: var(--text3);
+      }
+
+      /* ── Stats grid ─────────────────────────────────────────── */
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 16px;
+        margin-bottom: 28px;
+      }
+      .stat-card {
+        background: var(--bg2);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 20px;
+        position: relative;
+        overflow: hidden;
+      }
+      .stat-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+      }
+      .stat-card.blue::before {
+        background: var(--blue);
+      }
+      .stat-card.green::before {
+        background: var(--green);
+      }
+      .stat-card.amber::before {
+        background: var(--amber);
+      }
+      .stat-card.purple::before {
+        background: var(--purple);
+      }
+      .stat-card.teal::before {
+        background: var(--teal);
+      }
+      .stat-label {
+        font-size: 12px;
+        color: var(--text3);
+        margin-bottom: 8px;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+      .stat-value {
+        font-size: 32px;
+        font-weight: 700;
+        color: var(--text);
+        line-height: 1;
+      }
+      .stat-sub {
+        font-size: 12px;
+        color: var(--text3);
+        margin-top: 6px;
+      }
+
+      /* ── Cards ───────────────────────────────────────────────── */
+      .card {
+        background: var(--bg2);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        margin-bottom: 20px;
+      }
+      .card-header {
+        padding: 16px 20px;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+      .card-header h2 {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text);
+      }
+      .card-header p {
+        font-size: 12px;
+        color: var(--text3);
+      }
+      .card-body {
+        padding: 20px;
+      }
+
+      /* ── Table ───────────────────────────────────────────────── */
+      .tbl-wrap {
+        overflow-x: auto;
+        border-radius: var(--radius);
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+      }
+      thead th {
+        background: var(--bg3);
+        color: var(--text3);
+        font-weight: 600;
+        font-size: 11px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        padding: 10px 14px;
+        text-align: left;
+        border-bottom: 1px solid var(--border);
+        white-space: nowrap;
+      }
+      tbody tr {
+        border-bottom: 1px solid var(--border);
+        transition: background 0.1s;
+      }
+      tbody tr:last-child {
+        border-bottom: none;
+      }
+      tbody tr:hover {
+        background: var(--bg3);
+      }
+      tbody td {
+        padding: 11px 14px;
+        color: var(--text);
+        vertical-align: middle;
+      }
+
+      /* ── Badge ───────────────────────────────────────────────── */
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 3px 9px;
+        border-radius: 99px;
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.03em;
+      }
+      .badge-blue {
+        background: var(--blue-dim);
+        color: var(--blue);
+        border: 1px solid rgba(59, 130, 246, 0.3);
+      }
+      .badge-green {
+        background: var(--green-dim);
+        color: var(--green);
+        border: 1px solid rgba(34, 197, 94, 0.3);
+      }
+      .badge-red {
+        background: var(--red-dim);
+        color: var(--red);
+        border: 1px solid rgba(239, 68, 68, 0.3);
+      }
+      .badge-amber {
+        background: var(--amber-dim);
+        color: var(--amber);
+        border: 1px solid rgba(245, 158, 11, 0.3);
+      }
+      .badge-purple {
+        background: var(--purple-dim);
+        color: var(--purple);
+        border: 1px solid rgba(168, 85, 247, 0.3);
+      }
+      .badge-teal {
+        background: var(--teal-dim);
+        color: var(--teal);
+        border: 1px solid rgba(20, 184, 166, 0.3);
+      }
+      .badge-gray {
+        background: var(--bg4);
+        color: var(--text3);
+        border: 1px solid var(--border);
+      }
+
+      /* ── Progress bar ────────────────────────────────────────── */
+      .progress-wrap {
+        height: 5px;
+        background: var(--bg4);
+        border-radius: 99px;
+        overflow: hidden;
+        width: 120px;
+      }
+      .progress-fill {
+        height: 100%;
+        border-radius: 99px;
+        transition: width 0.4s ease;
+        background: var(--blue);
+      }
+      .progress-fill.low {
+        background: var(--green);
+      }
+      .progress-fill.mid {
+        background: var(--amber);
+      }
+      .progress-fill.high {
+        background: var(--red);
+      }
+
+      /* ── Form ────────────────────────────────────────────────── */
+      .form-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 14px;
+      }
+      .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+      }
+      label {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--text3);
+        letter-spacing: 0.04em;
+      }
+      input,
+      select,
+      textarea {
+        background: var(--bg3);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 9px 12px;
+        color: var(--text);
+        font-size: 13px;
+        font-family: var(--font);
+        outline: none;
+        transition:
+          border 0.15s,
+          box-shadow 0.15s;
+        width: 100%;
+      }
+      input:focus,
+      select:focus,
+      textarea:focus {
+        border-color: var(--blue);
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+      }
+      input::placeholder,
+      textarea::placeholder {
+        color: var(--text3);
+      }
+      select option {
+        background: var(--bg3);
+      }
+      .form-actions {
+        display: flex;
+        gap: 10px;
+        justify-content: flex-end;
+        margin-top: 4px;
+        padding-top: 16px;
+        border-top: 1px solid var(--border);
+      }
+
+      /* ── Buttons ─────────────────────────────────────────────── */
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 9px 18px;
+        border-radius: var(--radius);
+        font-size: 13px;
+        font-weight: 600;
+        border: none;
+        transition:
+          background 0.15s,
+          transform 0.1s,
+          opacity 0.15s;
+        white-space: nowrap;
+      }
+      .btn:active {
+        transform: scale(0.97);
+      }
+      .btn-primary {
+        background: var(--blue);
+        color: #fff;
+      }
+      .btn-primary:hover {
+        background: var(--blue2);
+      }
+      .btn-success {
+        background: var(--green);
+        color: #fff;
+      }
+      .btn-success:hover {
+        background: #16a34a;
+      }
+      .btn-danger {
+        background: var(--red);
+        color: #fff;
+      }
+      .btn-danger:hover {
+        background: #dc2626;
+      }
+      .btn-amber {
+        background: var(--amber);
+        color: #000;
+      }
+      .btn-amber:hover {
+        background: #d97706;
+      }
+      .btn-ghost {
+        background: var(--bg3);
+        color: var(--text2);
+        border: 1px solid var(--border);
+      }
+      .btn-ghost:hover {
+        background: var(--bg4);
+        color: var(--text);
+      }
+      .btn-sm {
+        padding: 6px 12px;
+        font-size: 12px;
+      }
+      .btn:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+
+      /* ── Toast ───────────────────────────────────────────────── */
+      #toast-container {
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        z-index: 9999;
+      }
+      .toast {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: var(--bg3);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 12px 16px;
+        box-shadow: var(--shadow);
+        min-width: 280px;
+        max-width: 380px;
+        animation: slide-in 0.2s ease;
+        font-size: 13px;
+        color: var(--text);
+      }
+      .toast.success {
+        border-color: rgba(34, 197, 94, 0.4);
+        background: rgba(20, 83, 45, 0.6);
+      }
+      .toast.error {
+        border-color: rgba(239, 68, 68, 0.4);
+        background: rgba(127, 29, 29, 0.6);
+      }
+      .toast-icon {
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        font-size: 11px;
+        font-weight: 700;
+      }
+      .toast.success .toast-icon {
+        background: var(--green);
+        color: #fff;
+      }
+      .toast.error .toast-icon {
+        background: var(--red);
+        color: #fff;
+      }
+      @keyframes slide-in {
+        from {
+          transform: translateX(24px);
+          opacity: 0;
+        }
+        to {
+          transform: none;
+          opacity: 1;
+        }
+      }
+
+      /* ── Severity dots ───────────────────────────────────────── */
+      .severity {
+        display: flex;
+        gap: 3px;
+        align-items: center;
+      }
+      .severity-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 2px;
+      }
+
+      /* ── Log entry ───────────────────────────────────────────── */
+      .log-entry {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 14px;
+        border-bottom: 1px solid var(--border);
+      }
+      .log-entry:last-child {
+        border-bottom: none;
+      }
+      .log-action {
+        width: 72px;
+        text-align: center;
+        flex-shrink: 0;
+      }
+      .log-meta {
+        flex: 1;
+        min-width: 0;
+      }
+      .log-main {
+        font-size: 13px;
+        color: var(--text);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .log-time {
+        font-size: 11px;
+        color: var(--text3);
+        margin-top: 2px;
+      }
+
+      /* ── Test results ────────────────────────────────────────── */
+      .test-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 14px;
+        border-bottom: 1px solid var(--border);
+      }
+      .test-row:last-child {
+        border-bottom: none;
+      }
+      .test-id {
+        width: 64px;
+        font-size: 11px;
+        font-weight: 700;
+        color: var(--text3);
+        font-family: monospace;
+        flex-shrink: 0;
+      }
+      .test-label {
+        flex: 1;
+        font-size: 13px;
+        color: var(--text);
+      }
+      .test-status {
+        flex-shrink: 0;
+      }
+      .test-summary {
+        display: flex;
+        gap: 16px;
+        padding: 16px 20px;
+        border-top: 2px solid var(--border);
+        background: var(--bg3);
+      }
+      .test-summary-item {
+        text-align: center;
+      }
+      .test-summary-val {
+        font-size: 24px;
+        font-weight: 700;
+      }
+      .test-summary-key {
+        font-size: 11px;
+        color: var(--text3);
+        margin-top: 2px;
+      }
+
+      /* ── Empty state ─────────────────────────────────────────── */
+      .empty {
+        text-align: center;
+        padding: 48px 24px;
+        color: var(--text3);
+      }
+      .empty-icon {
+        font-size: 36px;
+        margin-bottom: 12px;
+      }
+      .empty p {
+        font-size: 14px;
+      }
+
+      /* ── Spinner ─────────────────────────────────────────────── */
+      .spinner {
+        width: 16px;
+        height: 16px;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-top-color: #fff;
+        border-radius: 50%;
+        animation: spin 0.6s linear infinite;
+        display: inline-block;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      /* ── Dashboard chart bars ───────────────────────────────── */
+      .mini-bar-wrap {
+        display: flex;
+        align-items: flex-end;
+        gap: 4px;
+        height: 48px;
+        margin-top: 8px;
+      }
+      .mini-bar {
+        flex: 1;
+        border-radius: 3px 3px 0 0;
+        background: var(--blue);
+        opacity: 0.7;
+        transition: opacity 0.15s;
+      }
+      .mini-bar:hover {
+        opacity: 1;
+      }
+
+      /* ── Utility ─────────────────────────────────────────────── */
+      .flex {
+        display: flex;
+      }
+      .flex-1 {
+        flex: 1;
+      }
+      .items-center {
+        align-items: center;
+      }
+      .gap-8 {
+        gap: 8px;
+      }
+      .gap-12 {
+        gap: 12px;
+      }
+      .gap-16 {
+        gap: 16px;
+      }
+      .font-mono {
+        font-family: monospace;
+        font-size: 12px;
+      }
+      .text-sm {
+        font-size: 12px;
+      }
+      .text-xs {
+        font-size: 11px;
+      }
+      .text-muted {
+        color: var(--text3);
+      }
+      .fw-600 {
+        font-weight: 600;
+      }
+      .fw-700 {
+        font-weight: 700;
+      }
+      .mb-16 {
+        margin-bottom: 16px;
+      }
+      .mb-8 {
+        margin-bottom: 8px;
+      }
+      .w-100 {
+        width: 100%;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- TOP BAR -->
+    <header class="topbar">
+      <div class="topbar-logo">
+        <div class="topbar-logo-icon">DR</div>
+        <span class="topbar-title">DRTMS</span>
+      </div>
+      <span class="topbar-subtitle"
+        >Disaster Relief Resource Management &amp; Tracking System</span
+      >
+      <span class="topbar-badge">VIT Vellore· BCSE301L</span>
+    </header>
+
+    <!-- LAYOUT -->
+    <div class="layout">
+      <!-- SIDEBAR -->
+       
+      <nav class="sidebar">
+        <div class="sidebar-header">Navigation</div>
+
+        <div class="nav-item active" onclick="showPage('dashboard')">
+          <svg class="icon" viewBox="0 0 20 20" fill="currentColor">
+            <path
+              d="M3 4a1 1 0 011-1h4a1 1 0 011 1v5a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm0 9a1 1 0 011-1h4a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1v-2zm8-9a1 1 0 011-1h4a1 1 0 011 1v2a1 1 0 01-1 1h-4a1 1 0 01-1-1V4zm0 6a1 1 0 011-1h4a1 1 0 011 1v5a1 1 0 01-1 1h-4a1 1 0 01-1-1v-5z"
+            />
+          </svg>
+          Dashboard
+        </div>
+        <div class="nav-item" onclick="showPage('resources')">
+          <svg class="icon" viewBox="0 0 20 20" fill="currentColor">
+            <path
+              d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"
+            />
+          </svg>
+          Resource Inventory
+        </div>
+        <div class="nav-item" onclick="showPage('disasters')">
+          <svg class="icon" viewBox="0 0 20 20" fill="currentColor">
+            <path
+              fill-rule="evenodd"
+              d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+              clip-rule="evenodd"
+            />
+          </svg>
+          Disaster Events
+        </div>
+
+        <div class="sidebar-divider"></div>
+        <div class="sidebar-header">Operations</div>
+
+        <div class="nav-item" onclick="showPage('allocate')">
+          <svg class="icon" viewBox="0 0 20 20" fill="currentColor">
+            <path
+              d="M3 10a7 7 0 1114 0A7 7 0 013 10zm7-4a1 1 0 011 1v2h2a1 1 0 110 2h-2v2a1 1 0 11-2 0v-2H7a1 1 0 110-2h2V7a1 1 0 011-1z"
+            />
+          </svg>
+          Allocate Resources
+        </div>
+        <div class="nav-item" onclick="showPage('release')">
+          <svg class="icon" viewBox="0 0 20 20" fill="currentColor">
+            <path
+              d="M10 3a7 7 0 100 14A7 7 0 0010 3zm0 12a5 5 0 110-10 5 5 0 010 10zm-1-7h2v2h-2V8zm0 4h2v2h-2v-2z"
+            />
+          </svg>
+          Release Resources
+        </div>
+        <div class="nav-item" onclick="showPage('log')">
+          <svg class="icon" viewBox="0 0 20 20" fill="currentColor">
+            <path
+              fill-rule="evenodd"
+              d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 5a1 1 0 011-1h6a1 1 0 110 2H4a1 1 0 01-1-1z"
+              clip-rule="evenodd"
+            />
+          </svg>
+          Transaction Log
+        </div>
+
+        <div class="sidebar-divider"></div>
+        <div class="sidebar-header">Testing</div>
+
+        <div class="nav-item" onclick="showPage('tests')">
+          <svg class="icon" viewBox="0 0 20 20" fill="currentColor">
+            <path
+              fill-rule="evenodd"
+              d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+              clip-rule="evenodd"
+            />
+          </svg>
+          Test Cases
+        </div>
+
+        <div class="sidebar-footer">
+          <div class="server-status">
+            <span class="status-dot" id="status-dot"></span>
+            <span id="status-text">Checking API…</span>
+          </div>
+        </div>
+      </nav>
+
+      <!-- MAIN CONTENT -->
+      <main class="main">
+        <!-- ═══════════════ DASHBOARD ═══════════════ -->
+        <div class="page active" id="page-dashboard">
+          <div class="page-header">
+            <h1>Dashboard</h1>
+            <p>System overview and real-time statistics</p>
+          </div>
+
+          <div class="stats-grid" id="stats-grid">
+            <div class="stat-card blue">
+              <div class="stat-label">Total Resources</div>
+              <div class="stat-value" id="stat-resources">—</div>
+              <div class="stat-sub">Resource types in inventory</div>
+            </div>
+            <div class="stat-card amber">
+              <div class="stat-label">Active Disasters</div>
+              <div class="stat-value" id="stat-active">—</div>
+              <div class="stat-sub">Requiring immediate response</div>
+            </div>
+            <div class="stat-card green">
+              <div class="stat-label">Total Disasters</div>
+              <div class="stat-value" id="stat-disasters">—</div>
+              <div class="stat-sub">Registered events</div>
+            </div>
+            <div class="stat-card purple">
+              <div class="stat-label">Allocations Made</div>
+              <div class="stat-value" id="stat-allocations">—</div>
+              <div class="stat-sub">Successful transfers</div>
+            </div>
+            <div class="stat-card teal">
+              <div class="stat-label">Log Entries</div>
+              <div class="stat-value" id="stat-log">—</div>
+              <div class="stat-sub">Total transactions</div>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px">
+            <div class="card">
+              <div class="card-header">
+                <h2>Resource Utilisation</h2>
+                <span class="text-sm text-muted">% allocated</span>
+              </div>
+              <div class="card-body"><div id="dash-resources-table"></div></div>
+            </div>
+            <div class="card">
+              <div class="card-header">
+                <h2>Recent Transactions</h2>
+                <span class="text-sm text-muted">Last 5</span>
+              </div>
+              <div class="card-body" id="dash-log"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ═══════════════ RESOURCES ═══════════════ -->
+        <div class="page" id="page-resources">
+          <div class="page-header">
+            <h1>Resource Inventory</h1>
+            <p>Manage and monitor all relief resources</p>
+          </div>
+
+          <div class="card mb-16">
+            <div class="card-header">
+              <div>
+                <h2>Add New Resource</h2>
+                <p>Expand the inventory with new relief items</p>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="form-grid">
+                <div class="form-group">
+                  <label>Resource ID</label
+                  ><input id="r-id" placeholder="e.g. R008" />
+                </div>
+                <div class="form-group">
+                  <label>Name</label
+                  ><input id="r-name" placeholder="e.g. Medicine Supplies" />
+                </div>
+                <div class="form-group">
+                  <label>Type</label>
+                  <select id="r-type">
+                    <option value="Food">Food</option>
+                    <option value="Water">Water</option>
+                    <option value="Medical">Medical</option>
+                    <option value="Personnel">Personnel</option>
+                    <option value="Shelter">Shelter</option>
+                    <option value="Equipment">Equipment</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>Quantity</label
+                  ><input
+                    id="r-qty"
+                    type="number"
+                    min="1"
+                    placeholder="e.g. 500"
+                  />
+                </div>
+                <div class="form-group">
+                  <label>Unit</label
+                  ><input id="r-unit" placeholder="e.g. boxes" />
+                </div>
+              </div>
+              <div class="form-actions">
+                <button class="btn btn-primary" onclick="addResource()">
+                  Add Resource
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <h2>Current Inventory</h2>
+              <button class="btn btn-ghost btn-sm" onclick="loadResources()">
+                ↻ Refresh
+              </button>
+            </div>
+            <div class="tbl-wrap" id="resources-table"></div>
+          </div>
+        </div>
+
+        <!-- ═══════════════ DISASTERS ═══════════════ -->
+        <div class="page" id="page-disasters">
+          <div class="page-header">
+            <h1>Disaster Events</h1>
+            <p>Register and track all active disaster events</p>
+          </div>
+
+          <div class="card mb-16">
+            <div class="card-header">
+              <div>
+                <h2>Register New Disaster</h2>
+                <p>Add a new disaster event to the system</p>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="form-grid">
+                <div class="form-group">
+                  <label>Disaster ID</label
+                  ><input id="d-id" placeholder="e.g. D003" />
+                </div>
+                <div class="form-group">
+                  <label>Event Name</label
+                  ><input id="d-name" placeholder="e.g. Odisha Cyclone 2026" />
+                </div>
+                <div class="form-group">
+                  <label>Location</label
+                  ><input id="d-loc" placeholder="e.g. Bhubaneswar, Odisha" />
+                </div>
+                <div class="form-group">
+                  <label>Severity (1–5)</label>
+                  <select id="d-sev">
+                    <option value="1">1 — Low</option>
+                    <option value="2">2 — Moderate</option>
+                    <option value="3">3 — High</option>
+                    <option value="4" selected>4 — Severe</option>
+                    <option value="5">5 — Critical</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>Disaster Type</label>
+                  <select id="d-type">
+                    <option>Flood</option>
+                    <option>Cyclone</option>
+                    <option>Earthquake</option>
+                    <option>Fire</option>
+                    <option>Landslide</option>
+                    <option>Drought</option>
+                    <option>Other</option>
+                  </select>
+                </div>
+              </div>
+              <div class="form-actions">
+                <button class="btn btn-primary" onclick="registerDisaster()">
+                  Register Disaster
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <h2>All Disaster Events</h2>
+              <button class="btn btn-ghost btn-sm" onclick="loadDisasters()">
+                ↻ Refresh
+              </button>
+            </div>
+            <div class="tbl-wrap" id="disasters-table"></div>
+          </div>
+        </div>
+
+        <!-- ═══════════════ ALLOCATE ═══════════════ -->
+        <div class="page" id="page-allocate">
+          <div class="page-header">
+            <h1>Allocate Resources</h1>
+            <p>Assign relief resources to active disaster zones</p>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <h2>Resource Allocation Form</h2>
+                <p>Use Case UC-02 — Core use case implementation</p>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="form-grid">
+                <div class="form-group">
+                  <label>Disaster Event</label>
+                  <select id="a-disaster">
+                    <option value="">— Select disaster —</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>Resource</label>
+                  <select id="a-resource">
+                    <option value="">— Select resource —</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>Quantity</label>
+                  <input
+                    id="a-qty"
+                    type="number"
+                    min="1"
+                    placeholder="Enter quantity to allocate"
+                  />
+                </div>
+              </div>
+              <div
+                id="a-preview"
+                style="
+                  display: none;
+                  margin-top: 14px;
+                  padding: 12px;
+                  background: var(--bg3);
+                  border-radius: var(--radius);
+                  font-size: 13px;
+                  color: var(--text2);
+                  border: 1px solid var(--border);
+                "
+              ></div>
+              <div class="form-actions">
+                <button class="btn btn-ghost" onclick="loadAllocateDropdowns()">
+                  ↻ Refresh Lists
+                </button>
+                <button class="btn btn-primary" onclick="allocateResource()">
+                  Allocate Resource
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header"><h2>Recent Allocations</h2></div>
+            <div id="alloc-recent"></div>
+          </div>
+        </div>
+
+        <!-- ═══════════════ RELEASE ═══════════════ -->
+        <div class="page" id="page-release">
+          <div class="page-header">
+            <h1>Release Resources</h1>
+            <p>Return allocated resources back to the main inventory</p>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <h2>Resource Release Form</h2>
+                <p>Use Case UC-03 — Release resources from disaster zones</p>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="form-grid">
+                <div class="form-group">
+                  <label>Disaster Event</label>
+                  <select id="rel-disaster" onchange="loadReleaseResources()">
+                    <option value="">— Select disaster —</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>Resource (allocated to this disaster)</label>
+                  <select id="rel-resource">
+                    <option value="">— Select resource —</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>Quantity to Release</label>
+                  <input
+                    id="rel-qty"
+                    type="number"
+                    min="1"
+                    placeholder="Enter quantity to release"
+                  />
+                </div>
+              </div>
+              <div class="form-actions">
+                <button class="btn btn-ghost" onclick="loadReleaseDropdowns()">
+                  ↻ Refresh
+                </button>
+                <button class="btn btn-amber" onclick="releaseResource()">
+                  Release Resource
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ═══════════════ LOG ═══════════════ -->
+        <div class="page" id="page-log">
+          <div class="page-header">
+            <h1>Transaction Log</h1>
+            <p>Complete timestamped audit trail of all operations</p>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <h2>All Transactions</h2>
+              <div class="flex gap-8">
+                <select
+                  id="log-filter"
+                  onchange="renderLog()"
+                  style="
+                    padding: 5px 10px;
+                    font-size: 12px;
+                    background: var(--bg3);
+                    border: 1px solid var(--border);
+                    color: var(--text);
+                    border-radius: var(--radius);
+                  "
+                >
+                  <option value="ALL">All</option>
+                  <option value="ALLOCATE">Allocations only</option>
+                  <option value="RELEASE">Releases only</option>
+                </select>
+                <button class="btn btn-ghost btn-sm" onclick="loadLog()">
+                  ↻ Refresh
+                </button>
+              </div>
+            </div>
+            <div id="log-list"></div>
+          </div>
+        </div>
+
+        <!-- ═══════════════ TEST CASES ═══════════════ -->
+        <div class="page" id="page-tests">
+          <div class="page-header">
+            <h1>Test Cases</h1>
+            <p>
+              18 automated test cases — 8 valid + 10 invalid — all verified
+              against the DRTMS API
+            </p>
+          </div>
+
+          <div class="card mb-16" style="border-color: var(--blue-dim)">
+            <div class="card-header">
+              <div>
+                <h2>Run Test Suite</h2>
+                <p>Executes all 18 test cases on the server-side DRTMS logic</p>
+              </div>
+              <button
+                class="btn btn-primary"
+                id="run-tests-btn"
+                onclick="runTests()"
+              >
+                <span id="run-tests-label">▶ Run All Tests</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="card" id="test-results-card" style="display: none">
+            <div class="card-header"><h2>Test Results</h2></div>
+            <div id="test-results-list"></div>
+            <div class="test-summary" id="test-summary"></div>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <!-- TOAST CONTAINER -->
+    <div id="toast-container"></div>
+
+    <script>
+      const API = "http://localhost:5000/api";
+      let _log = [],
+        _resources = [],
+        _disasters = [];
+
+      // ── Navigation ───────────────────────────────────────────────
+      function showPage(id) {
+        document
+          .querySelectorAll(".page")
+          .forEach((p) => p.classList.remove("active"));
+        document
+          .querySelectorAll(".nav-item")
+          .forEach((n) => n.classList.remove("active"));
+        document.getElementById("page-" + id).classList.add("active");
+        const items = document.querySelectorAll(".nav-item");
+        items.forEach((n) => {
+          if (n.getAttribute("onclick").includes("'" + id + "'"))
+            n.classList.add("active");
+        });
+        const loaders = {
+          dashboard: loadDashboard,
+          resources: loadResources,
+          disasters: loadDisasters,
+          allocate: loadAllocateDropdowns,
+          release: loadReleaseDropdowns,
+          log: loadLog,
+        };
+        if (loaders[id]) loaders[id]();
+      }
+
+      // ── API helper ───────────────────────────────────────────────
+      async function api(path, method = "GET", body = null) {
+        const opts = {
+          method,
+          headers: { "Content-Type": "application/json" },
+        };
+        if (body) opts.body = JSON.stringify(body);
+        const res = await fetch(API + path, opts);
+        return res.json();
+      }
+
+      // ── Toast ────────────────────────────────────────────────────
+      function toast(msg, type = "success") {
+        const c = document.getElementById("toast-container");
+        const t = document.createElement("div");
+        t.className = "toast " + type;
+        t.innerHTML = `<div class="toast-icon">${type === "success" ? "✓" : "✕"}</div><span>${msg}</span>`;
+        c.appendChild(t);
+        setTimeout(() => t.remove(), 3800);
+      }
+
+      // ── Status check ─────────────────────────────────────────────
+      async function checkServer() {
+        const dot = document.getElementById("status-dot");
+        const txt = document.getElementById("status-text");
+        try {
+          await api("/stats");
+          dot.className = "status-dot online";
+          txt.textContent = "API connected";
+        } catch {
+          dot.className = "status-dot offline";
+          txt.textContent = "API offline";
+        }
+      }
+
+      // ── Dashboard ────────────────────────────────────────────────
+      async function loadDashboard() {
+        try {
+          const [stats, res, dis, log] = await Promise.all([
+            api("/stats"),
+            api("/resources"),
+            api("/disasters"),
+            api("/log"),
+          ]);
+          _resources = res;
+          _disasters = dis;
+          _log = log;
+
+          document.getElementById("stat-resources").textContent =
+            stats.total_resources;
+          document.getElementById("stat-active").textContent =
+            stats.active_disasters;
+          document.getElementById("stat-disasters").textContent =
+            stats.total_disasters;
+          document.getElementById("stat-allocations").textContent =
+            stats.total_allocations;
+          document.getElementById("stat-log").textContent =
+            stats.total_log_entries;
+
+          // Resource utilisation table
+          const rt = document.getElementById("dash-resources-table");
+          rt.innerHTML = res
+            .map((r) => {
+              const used = r.quantity - r.available_quantity;
+              const pct =
+                r.quantity > 0 ? Math.round((used / r.quantity) * 100) : 0;
+              const cls = pct >= 80 ? "high" : pct >= 50 ? "mid" : "low";
+              return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">
+        <div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${r.name}</div>
+        <div style="font-size:11px;color:var(--text3)">${r.available_quantity}/${r.quantity} ${r.unit}</div></div>
+        <div><div class="progress-wrap"><div class="progress-fill ${cls}" style="width:${pct}%"></div></div>
+        <div style="font-size:10px;color:var(--text3);text-align:right;margin-top:3px">${pct}%</div></div>
+      </div>`;
+            })
+            .join("");
+
+          // Recent log
+          const dl = document.getElementById("dash-log");
+          const recent = [...log].reverse().slice(0, 5);
+          if (!recent.length) {
+            dl.innerHTML =
+              '<div class="empty"><div class="empty-icon">📋</div><p>No transactions yet</p></div>';
+            return;
+          }
+          dl.innerHTML = recent
+            .map((l) => {
+              const isAlloc = l.action === "ALLOCATE";
+              return `<div style="display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--border)">
+        <span class="badge ${isAlloc ? "badge-blue" : "badge-amber"}" style="margin-top:1px;font-size:10px;min-width:60px;justify-content:center">${l.action}</span>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:12px;font-weight:600;color:var(--text)">${l.quantity} ${l.unit} of ${l.resource_name}</div>
+          <div style="font-size:11px;color:var(--text3)">${isAlloc ? "→" : "←"} ${l.disaster_name}</div>
+        </div>
+      </div>`;
+            })
+            .join("");
+        } catch (e) {
+          toast("Failed to load dashboard. Is the API running?", "error");
+        }
+      }
+
+      // ── Resources ────────────────────────────────────────────────
+      async function loadResources() {
+        try {
+          _resources = await api("/resources");
+          const t = document.getElementById("resources-table");
+          if (!_resources.length) {
+            t.innerHTML =
+              '<div class="empty"><p>No resources in inventory</p></div>';
+            return;
+          }
+          t.innerHTML = `<table>
+      <thead><tr><th>ID</th><th>Name</th><th>Type</th><th>Total</th><th>Available</th><th>Allocated</th><th>Unit</th><th>Utilisation</th></tr></thead>
+      <tbody>${_resources
+        .map((r) => {
+          const used = r.quantity - r.available_quantity;
+          const pct =
+            r.quantity > 0 ? Math.round((used / r.quantity) * 100) : 0;
+          const cls = pct >= 80 ? "high" : pct >= 50 ? "mid" : "low";
+          return `<tr>
+          <td class="font-mono">${r.resource_id}</td>
+          <td class="fw-600">${r.name}</td>
+          <td><span class="badge badge-blue">${r.resource_type}</span></td>
+          <td>${r.quantity}</td>
+          <td style="color:var(--green);font-weight:600">${r.available_quantity}</td>
+          <td style="color:${used > 0 ? "var(--amber)" : "var(--text3)"}">${used}</td>
+          <td class="text-muted">${r.unit}</td>
+          <td><div style="display:flex;align-items:center;gap:8px">
+            <div class="progress-wrap"><div class="progress-fill ${cls}" style="width:${pct}%"></div></div>
+            <span class="text-xs text-muted">${pct}%</span>
+          </div></td>
+        </tr>`;
+        })
+        .join("")}</tbody>
+    </table>`;
+        } catch {
+          toast("Failed to load resources", "error");
+        }
+      }
+
+      async function addResource() {
+        const id = document.getElementById("r-id").value.trim();
+        const name = document.getElementById("r-name").value.trim();
+        const type = document.getElementById("r-type").value;
+        const qty = parseInt(document.getElementById("r-qty").value);
+        const unit = document.getElementById("r-unit").value.trim();
+        if (!id || !name || !qty || !unit) {
+          toast("All fields are required", "error");
+          return;
+        }
+        const r = await api("/resources", "POST", {
+          resource_id: id,
+          name,
+          resource_type: type,
+          quantity: qty,
+          unit,
+        });
+        if (r.success) {
+          toast(r.message);
+          loadResources();
+          document.getElementById("r-id").value = "";
+          document.getElementById("r-name").value = "";
+          document.getElementById("r-qty").value = "";
+          document.getElementById("r-unit").value = "";
+        } else toast(r.message, "error");
+      }
+
+      // ── Disasters ────────────────────────────────────────────────
+      const SEVERITY_COLORS = [
+        "",
+        "var(--green)",
+        "var(--teal)",
+        "var(--amber)",
+        "var(--red)",
+        "#ff3b30",
+      ];
+      const SEVERITY_LABELS = [
+        "",
+        "Low",
+        "Moderate",
+        "High",
+        "Severe",
+        "Critical",
+      ];
+      const TYPE_COLORS = {
+        Flood: "badge-blue",
+        Cyclone: "badge-purple",
+        Earthquake: "badge-red",
+        Fire: "badge-red",
+        Landslide: "badge-amber",
+        Drought: "badge-amber",
+        Other: "badge-gray",
+      };
+
+      async function loadDisasters() {
+        try {
+          _disasters = await api("/disasters");
+          const t = document.getElementById("disasters-table");
+          if (!_disasters.length) {
+            t.innerHTML =
+              '<div class="empty"><div class="empty-icon">⚠️</div><p>No disasters registered yet</p></div>';
+            return;
+          }
+          t.innerHTML = `<table>
+      <thead><tr><th>ID</th><th>Name</th><th>Location</th><th>Type</th><th>Severity</th><th>Status</th><th>Registered</th><th>Resources Allocated</th></tr></thead>
+      <tbody>${_disasters
+        .map((d) => {
+          const alloc = Object.keys(d.allocated_resources).length;
+          const sevDots = Array.from(
+            { length: 5 },
+            (_, i) =>
+              `<div class="severity-dot" style="background:${i < d.severity ? SEVERITY_COLORS[d.severity] : "var(--bg4)"}"></div>`,
+          ).join("");
+          return `<tr>
+          <td class="font-mono">${d.disaster_id}</td>
+          <td class="fw-600">${d.name}</td>
+          <td class="text-muted">${d.location}</td>
+          <td><span class="badge ${TYPE_COLORS[d.disaster_type] || "badge-gray"}">${d.disaster_type}</span></td>
+          <td><div class="severity">${sevDots}<span style="font-size:11px;color:${SEVERITY_COLORS[d.severity]};margin-left:4px;font-weight:600">${SEVERITY_LABELS[d.severity]}</span></div></td>
+          <td><span class="badge ${d.status === "Active" ? "badge-green" : "badge-gray"}">${d.status}</span></td>
+          <td class="text-xs text-muted">${d.registered_at}</td>
+          <td style="color:${alloc ? "var(--blue)" : "var(--text3)"}">${alloc} type${alloc !== 1 ? "s" : ""}</td>
+        </tr>`;
+        })
+        .join("")}</tbody>
+    </table>`;
+        } catch {
+          toast("Failed to load disasters", "error");
+        }
+      }
+
+      async function registerDisaster() {
+        const r = await api("/disasters", "POST", {
+          disaster_id: document.getElementById("d-id").value.trim(),
+          name: document.getElementById("d-name").value.trim(),
+          location: document.getElementById("d-loc").value.trim(),
+          severity: parseInt(document.getElementById("d-sev").value),
+          disaster_type: document.getElementById("d-type").value,
+        });
+        if (r.success) {
+          toast(r.message);
+          loadDisasters();
+          document.getElementById("d-id").value = "";
+          document.getElementById("d-name").value = "";
+          document.getElementById("d-loc").value = "";
+        } else toast(r.message, "error");
+      }
+
+      // ── Allocate ─────────────────────────────────────────────────
+      async function loadAllocateDropdowns() {
+        try {
+          const [dis, res] = await Promise.all([
+            api("/disasters"),
+            api("/resources"),
+          ]);
+          _disasters = dis;
+          _resources = res;
+          const ds = document.getElementById("a-disaster");
+          ds.innerHTML =
+            '<option value="">— Select disaster —</option>' +
+            dis
+              .filter((d) => d.status === "Active")
+              .map(
+                (d) =>
+                  `<option value="${d.disaster_id}">${d.disaster_id} — ${d.name} (${d.location})</option>`,
+              )
+              .join("");
+          const rs = document.getElementById("a-resource");
+          rs.innerHTML =
+            '<option value="">— Select resource —</option>' +
+            res
+              .map(
+                (r) =>
+                  `<option value="${r.resource_id}">${r.resource_id} — ${r.name} (${r.available_quantity} ${r.unit} available)</option>`,
+              )
+              .join("");
+          loadAllocRecent();
+        } catch {
+          toast("Failed to load data", "error");
+        }
+      }
+
+      async function loadAllocRecent() {
+        try {
+          const log = await api("/log");
+          const allocs = log
+            .filter((l) => l.action === "ALLOCATE")
+            .reverse()
+            .slice(0, 5);
+          const el = document.getElementById("alloc-recent");
+          if (!allocs.length) {
+            el.innerHTML = '<div class="empty"><p>No allocations yet</p></div>';
+            return;
+          }
+          el.innerHTML = allocs
+            .map(
+              (l) => `<div class="log-entry">
+      <span class="badge badge-blue log-action">ALLOCATE</span>
+      <div class="log-meta">
+        <div class="log-main">${l.quantity} ${l.unit} of <strong>${l.resource_name}</strong> → ${l.disaster_name}</div>
+        <div class="log-time">${l.timestamp}</div>
+      </div>
+    </div>`,
+            )
+            .join("");
+        } catch {}
+      }
+
+      async function allocateResource() {
+        const did = document.getElementById("a-disaster").value;
+        const rid = document.getElementById("a-resource").value;
+        const qty = parseInt(document.getElementById("a-qty").value);
+        if (!did || !rid || !qty) {
+          toast("Please fill all fields", "error");
+          return;
+        }
+        const r = await api("/allocate", "POST", {
+          disaster_id: did,
+          resource_id: rid,
+          quantity: qty,
+        });
+        if (r.success) {
+          toast(r.message);
+          loadAllocateDropdowns();
+          document.getElementById("a-qty").value = "";
+        } else toast(r.message, "error");
+      }
+
+      // ── Release ──────────────────────────────────────────────────
+      async function loadReleaseDropdowns() {
+        const dis = await api("/disasters");
+        _disasters = dis;
+        const ds = document.getElementById("rel-disaster");
+        ds.innerHTML =
+          '<option value="">— Select disaster —</option>' +
+          dis
+            .filter((d) => d.status === "Active")
+            .map(
+              (d) =>
+                `<option value="${d.disaster_id}">${d.disaster_id} — ${d.name}</option>`,
+            )
+            .join("");
+      }
+
+      async function loadReleaseResources() {
+        const did = document.getElementById("rel-disaster").value;
+        if (!did) return;
+        const disasters = await api("/disasters");
+        const dis = disasters.find((d) => d.disaster_id === did);
+        const rs = document.getElementById("rel-resource");
+        if (!dis || !Object.keys(dis.allocated_resources).length) {
+          rs.innerHTML =
+            '<option value="">No resources allocated to this disaster</option>';
+          return;
+        }
+        const res = await api("/resources");
+        rs.innerHTML =
+          '<option value="">— Select resource —</option>' +
+          Object.entries(dis.allocated_resources)
+            .map(([rid, qty]) => {
+              const r = res.find((x) => x.resource_id === rid);
+              return `<option value="${rid}">${rid} — ${r ? r.name : rid} (${qty} ${r ? r.unit : ""} allocated)</option>`;
+            })
+            .join("");
+      }
+
+      async function releaseResource() {
+        const did = document.getElementById("rel-disaster").value;
+        const rid = document.getElementById("rel-resource").value;
+        const qty = parseInt(document.getElementById("rel-qty").value);
+        if (!did || !rid || !qty) {
+          toast("Please fill all fields", "error");
+          return;
+        }
+        const r = await api("/release", "POST", {
+          disaster_id: did,
+          resource_id: rid,
+          quantity: qty,
+        });
+        if (r.success) {
+          toast(r.message, "success");
+          loadReleaseDropdowns();
+          document.getElementById("rel-qty").value = "";
+        } else toast(r.message, "error");
+      }
+
+      // ── Log ──────────────────────────────────────────────────────
+      async function loadLog() {
+        _log = await api("/log");
+        renderLog();
+      }
+
+      function renderLog() {
+        const filter = document.getElementById("log-filter").value;
+        const filtered =
+          filter === "ALL" ? _log : _log.filter((l) => l.action === filter);
+        const el = document.getElementById("log-list");
+        if (!filtered.length) {
+          el.innerHTML = '<div class="empty"><p>No transactions yet</p></div>';
+          return;
+        }
+        el.innerHTML = [...filtered]
+          .reverse()
+          .map((l, i) => {
+            const isAlloc = l.action === "ALLOCATE";
+            return `<div class="log-entry">
+      <span class="text-xs text-muted" style="width:28px;flex-shrink:0">#${filtered.length - i}</span>
+      <span class="badge ${isAlloc ? "badge-blue" : "badge-amber"} log-action">${l.action}</span>
+      <div class="log-meta">
+        <div class="log-main">${l.quantity} ${l.unit} of <strong>${l.resource_name}</strong> (${l.resource_id}) ${isAlloc ? "→ to" : "← from"} <strong>${l.disaster_name}</strong> (${l.disaster_id})</div>
+        <div class="log-time">${l.timestamp}</div>
+      </div>
+    </div>`;
+          })
+          .join("");
+      }
+
+      // ── Test Cases ───────────────────────────────────────────────
+      async function runTests() {
+        const btn = document.getElementById("run-tests-btn");
+        const lbl = document.getElementById("run-tests-label");
+        btn.disabled = true;
+        lbl.innerHTML = '<span class="spinner"></span> Running…';
+        try {
+          const data = await api("/tests", "POST");
+          document.getElementById("test-results-card").style.display = "block";
+          const list = document.getElementById("test-results-list");
+          list.innerHTML = data.results
+            .map((r) => {
+              const pass = r.status === "PASS";
+              const cat =
+                r.category === "valid"
+                  ? '<span class="badge badge-teal" style="font-size:10px">VALID</span>'
+                  : '<span class="badge badge-purple" style="font-size:10px">INVALID</span>';
+              return `<div class="test-row">
+        <span class="test-id">${r.id}</span>
+        ${cat}
+        <span class="test-label">${r.label}</span>
+        <span class="test-status badge ${pass ? "badge-green" : "badge-red"}">${pass ? "✓ PASS" : "✕ FAIL"}</span>
+      </div>`;
+            })
+            .join("");
+          const summary = document.getElementById("test-summary");
+          summary.innerHTML = `
+      <div class="test-summary-item"><div class="test-summary-val" style="color:var(--text)">${data.total}</div><div class="test-summary-key">Total</div></div>
+      <div class="test-summary-item"><div class="test-summary-val" style="color:var(--green)">${data.passed}</div><div class="test-summary-key">Passed</div></div>
+      <div class="test-summary-item"><div class="test-summary-val" style="color:var(--red)">${data.failed}</div><div class="test-summary-key">Failed</div></div>
+      <div class="test-summary-item"><div class="test-summary-val" style="color:var(--blue)">${Math.round((data.passed / data.total) * 100)}%</div><div class="test-summary-key">Pass Rate</div></div>
+    `;
+          toast(
+            `${data.passed}/${data.total} tests passed`,
+            data.failed === 0 ? "success" : "error",
+          );
+        } catch {
+          toast("Could not reach API. Is the backend running?", "error");
+        }
+        btn.disabled = false;
+        lbl.textContent = "▶ Run All Tests";
+      }
+
+      // ── Init ─────────────────────────────────────────────────────
+      checkServer();
+      setInterval(checkServer, 10000);
+      loadDashboard();
+    </script>
+  </body>
+</html>
